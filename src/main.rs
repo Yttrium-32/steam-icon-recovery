@@ -117,6 +117,7 @@ fn recover_icon(desktop_file: &DirEntry) -> anyhow::Result<()> {
     Ok(())
 }
 
+#[inline]
 pub fn extract_game_id(exec_field: &str) -> Option<String> {
     let game_id_regex: Regex = Regex::new(r"steam steam://rungameid/([0-9]+)").unwrap();
 
