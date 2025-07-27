@@ -61,38 +61,59 @@ fn recover_icon(desktop_file: &DirEntry) -> anyhow::Result<()> {
         }
     }
 
+    let mut icon_exists = false;
+    let mut game_id: Option<String> = None;
+    let mut _icon_id: Option<String> = None;
 
-    for (i, line) in reader.enumerate() {
+    'line_iter: for (i, line) in reader.enumerate() {
         let line = match line {
             Ok(val) => {
                 val
             }
             Err(e) => {
                 eprintln!("Failed to read line {i}: {e}");
-                continue;
+                continue 'line_iter;
             }
         };
 
         if let Some((key, value)) = line.split_once("=") {
             let key = key.trim();
             let value = value.trim();
+
+            println!("{key}: {value}");
+
             if key == "Exec" {
-                let game_id = match extract_game_id(value) {
-                    Some(val) => val,
+                game_id = match extract_game_id(value) {
+                    Some(val) => Some(val),
                     None => {
                         eprintln!("No game id found!");
-                        break;
+                        break 'line_iter;
                     }
                 };
-                println!("Found game id: {game_id}");
+            }
+
+            if key == "Icon" {
+                if value != "steam" {
+                    println!("Icon already exists, skipping...");
+                    icon_exists = true;
+                }
+                break 'line_iter;
             }
         } else {
-            eprintln!("Failed to split at `=` in `{line}`, checking next line...");
-            continue;
+            eprintln!("Line number {i} might be malformed");
+            continue 'line_iter;
+        }
+
+    }
+
+
+    if !icon_exists {
+        if let Some(game_id) = game_id {
+            _icon_id = extract_icon_id(game_id);
         }
     }
-    println!();
 
+    println!();
     Ok(())
 }
 
@@ -120,7 +141,10 @@ pub fn extract_icon_id(game_id: String) -> Option<String> {
 
     let cmd_output = String::from_utf8_lossy(&cmd.stdout);
     if let Some(capture) = game_id_regex.captures(&cmd_output) {
+        println!("Found icon id: {}", &capture[1]);
         return Some(capture[1].to_owned());
     }
+
+    println!("No icon id found! Something has gone wrong...");
     None
 }
