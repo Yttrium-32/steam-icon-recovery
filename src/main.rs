@@ -118,7 +118,7 @@ fn recover_icon(desktop_file: &DirEntry) -> anyhow::Result<()> {
 }
 
 #[inline]
-pub fn extract_game_id(exec_field: &str) -> Option<String> {
+fn extract_game_id(exec_field: &str) -> Option<String> {
     let game_id_regex: Regex = Regex::new(r"steam steam://rungameid/([0-9]+)").unwrap();
 
     if let Some(capture) = game_id_regex.captures(exec_field) {
@@ -128,7 +128,7 @@ pub fn extract_game_id(exec_field: &str) -> Option<String> {
 }
 
 #[inline]
-pub fn extract_icon_id(game_id: String) -> Option<String> {
+fn extract_icon_id(game_id: String) -> Option<String> {
     let game_id_regex: Regex = Regex::new(r#""clienticon"\s+"([^"]+)""#).unwrap();
 
     let cmd = Command::new("steamcmd")
