@@ -50,7 +50,7 @@ fn recover_icon(desktop_file: &DirEntry) -> anyhow::Result<()> {
     // top of the file
     match first_line {
         Ok(val) => {
-            if val != "[Desktop Entry]" {
+            if val.trim() != "[Desktop Entry]" {
                 eprintln!("No `[Desktop Entry]` section found, skipping file...\n");
                 return Ok(());
             }
@@ -100,10 +100,9 @@ fn recover_icon(desktop_file: &DirEntry) -> anyhow::Result<()> {
                 break 'line_iter;
             }
         } else {
-            eprintln!("Line number {i} might be malformed");
+            eprintln!("Line number {i} might be malformed, failed to parse");
             continue 'line_iter;
         }
-
     }
 
 
@@ -146,6 +145,6 @@ fn extract_icon_id(game_id: String) -> Option<String> {
         return Some(capture[1].to_owned());
     }
 
-    println!("No icon id found! Something has gone wrong...");
+    eprintln!("No icon id found! Something has gone wrong...");
     None
 }
