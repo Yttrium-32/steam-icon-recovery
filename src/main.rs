@@ -3,20 +3,50 @@ use std::path::PathBuf;
 use std::fs::{read_dir, File, DirEntry};
 use std::io::{BufReader, BufRead};
 use std::process::Command;
+
 use anyhow::{Context, bail};
 use regex::Regex;
+use clap::Parser;
+
+/// Steam shortcuts icon recovery tool for linux
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Cli {
+    /// Optional file to process, overrides `dir`
+    #[arg(short, long, value_name = "FILE")]
+    file: Option<PathBuf>,
+
+    /// Directory to parse files from, defaults to $HOME/.local/share/applications
+    #[arg(short, long, value_name = "DIR")]
+    dir: Option<PathBuf>
+}
 
 fn main() -> anyhow::Result<()> {
-    let user_home = env::var("HOME").context("HOME is not set!")?;
-    let app_dir = PathBuf::from(user_home).join(".local/share/applications/");
+    let cli = Cli::parse();
 
-    let paths = read_dir(&app_dir)
-        .with_context(|| format!("{} doesn't exist or don't have read permissions", app_dir.display()))?;
+    if let Some(file_path) = cli.file {
+        todo!("Only parse a single file, namely {}", file_path.display());
+    } else {
+        let dir = cli.dir.unwrap_or_else(|| {
+            let user_home = env::var("HOME").expect("HOME not set");
+            PathBuf::from(user_home).join(".local/share/applications/")
+        });
+        parse_dir(dir)?;
+    }
 
-    for path in paths {
-        match path {
+    Ok(())
+}
+
+fn parse_dir(dir_path: PathBuf) -> anyhow::Result<()> {
+    let entries = read_dir(&dir_path)
+        .with_context(|| format!("{} doesn't exist or lacks read permissions", dir_path.display()))?;
+
+    for entry in entries {
+        match entry {
             Ok(entry) => {
-                recover_icon(&entry)?;
+                if let Err(e) = recover_icon_id_from_file(&entry) {
+                    eprintln!("Error processing {}: {e}", entry.path().display());
+                }
             }
             Err(e) => {
                 eprintln!("Failed to read path: {e}");
@@ -24,19 +54,18 @@ fn main() -> anyhow::Result<()> {
             }
         };
     }
-
     Ok(())
 }
 
-fn recover_icon(desktop_file: &DirEntry) -> anyhow::Result<()> {
-    if !desktop_file.path().is_file() {
-        bail!("{} is not a file, skipping...", desktop_file.path().display());
+fn recover_icon_id_from_file(file_entry: &DirEntry) -> anyhow::Result<()> {
+    if !file_entry.path().is_file() {
+        bail!("{} is not a file, skipping...", file_entry.path().display());
     }
 
-    let file_handle = File::open(desktop_file.path())?;
+    let file_handle = File::open(file_entry.path())?;
     let mut reader = BufReader::new(file_handle).lines();
 
-    println!("Processing `{}` :", desktop_file.path().display());
+    println!("Processing `{}` :", file_entry.path().display());
 
     let first_line = match reader.next() {
         Some(val) => val,
