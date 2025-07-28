@@ -1,6 +1,6 @@
 use std::env;
 use std::path::PathBuf;
-use std::fs::{read_dir, File, DirEntry};
+use std::fs::{read_dir, File};
 use std::io::{BufReader, BufRead};
 use std::process::Command;
 
@@ -44,7 +44,7 @@ fn parse_dir(dir_path: PathBuf) -> anyhow::Result<()> {
     for entry in entries {
         match entry {
             Ok(entry) => {
-                if let Err(e) = recover_icon_id_from_file(&entry) {
+                if let Err(e) = recover_icon_id_from_file(&entry.path()) {
                     eprintln!("Error processing {}: {e}", entry.path().display());
                 }
             }
@@ -57,15 +57,15 @@ fn parse_dir(dir_path: PathBuf) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn recover_icon_id_from_file(file_entry: &DirEntry) -> anyhow::Result<()> {
-    if !file_entry.path().is_file() {
-        bail!("{} is not a file, skipping...", file_entry.path().display());
+fn recover_icon_id_from_file(file_entry: &PathBuf) -> anyhow::Result<()> {
+    if !file_entry.is_file() {
+        bail!("{} is not a file, skipping...", file_entry.display());
     }
 
-    let file_handle = File::open(file_entry.path())?;
+    let file_handle = File::open(file_entry)?;
     let mut reader = BufReader::new(file_handle).lines();
 
-    println!("Processing `{}` :", file_entry.path().display());
+    println!("Processing `{}` :", file_entry.display());
 
     let first_line = match reader.next() {
         Some(val) => val,
