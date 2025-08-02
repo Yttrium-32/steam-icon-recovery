@@ -4,6 +4,7 @@ use std::fs::{read_dir, File};
 use std::io::{BufReader, BufRead};
 use std::process::Command;
 
+use reqwest::blocking::get;
 use anyhow::{Context, bail};
 use regex::Regex;
 use clap::Parser;
@@ -134,15 +135,33 @@ fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
 
     if !icon_exists {
         if let Some(game_id) = game_id {
-            let icon_hash = extract_icon_id(&game_id, false)?;
-            println!("Found icon id: {}", &icon_hash);
+            let icon_id = extract_icon_id(&game_id, false)?;
+            println!("Found icon id: {}", &icon_id);
 
-            let url = format!("https://cdn.steamstatic.com/steamcommunity/public/images/apps/{game_id}/{icon_hash}.ico");
+            let icon_name = format!("steam_icon_{game_id}.ico");
+
+            let url = format!("https://cdn.steamstatic.com/steamcommunity/public/images/apps/{game_id}/{icon_id}.ico");
             println!("Icon url: {url}");
+
+            download_icon(&url, &icon_name)?;
         }
     }
 
     println!();
+    Ok(())
+}
+
+fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()>
+{
+    let mut dest = File::create(icon_name)
+        .with_context(|| format!("Failed to create file at {icon_name}"))?;
+
+
+    let mut response = get(url)
+        .with_context(|| format!("Failed to send GET request to {url}"))?;
+
+    response.copy_to(&mut dest).with_context(|| format!("Failed to write response to file at {:?}", dest))?;
+
     Ok(())
 }
 
