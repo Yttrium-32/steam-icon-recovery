@@ -59,7 +59,7 @@ fn parse_dir(dir_path: PathBuf) -> anyhow::Result<()> {
 
 fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
     if !file_entry.is_file() {
-        bail!("{} is not a file, skipping...", file_entry.display());
+        bail!("Not a file, skipping...\n");
     }
 
     let file_handle = File::open(file_entry)?;
@@ -85,7 +85,7 @@ fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
             }
         }
         Err(e) => {
-            eprintln!("Failed to read first line: {e}\nSkipping file...");
+            eprintln!("Failed to read first line: {e}\nSkipping file...\n");
             return Ok(());
         }
     }
@@ -108,8 +108,6 @@ fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
         if let Some((key, value)) = line.split_once("=") {
             let key = key.trim();
             let value = value.trim();
-
-            println!("{key}: {value}");
 
             if key == "Exec" {
                 game_id = match extract_game_id(value) {
@@ -166,14 +164,12 @@ fn extract_icon_id(game_id: String) -> Option<String> {
         .arg(game_id)
         .arg("+quit")
         .output()
-        .expect("Failed to execute `steamcmd`");
+        .with_context(|| "Failed to execute `steamcmd`")?;
 
     let cmd_output = String::from_utf8_lossy(&cmd.stdout);
     if let Some(capture) = game_id_regex.captures(&cmd_output) {
-        println!("Found icon id: {}", &capture[1]);
-        return Some(capture[1].to_owned());
+        Ok(capture[1].to_owned())
+    } else {
+        bail!("No icon id found! Something has gone wrong...");
     }
-
-    eprintln!("No icon id found! Something has gone wrong...");
-    None
 }
