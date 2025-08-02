@@ -176,7 +176,7 @@ fn extract_game_id(exec_field: &str) -> Option<String> {
 }
 
 #[inline]
-fn extract_icon_id(game_id: String) -> Option<String> {
+fn extract_icon_id(game_id: &String) -> anyhow::Result<String> {
     let game_id_regex: Regex = Regex::new(r#""clienticon"\s+"([^"]+)""#).unwrap();
 
     let cmd = Command::new("steamcmd")
