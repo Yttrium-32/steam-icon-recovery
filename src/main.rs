@@ -25,7 +25,7 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     if let Some(file_path) = cli.file {
-        todo!("Only parse a single file, namely {}", file_path.display());
+        recover_icon_for_file(&file_path)?;
     } else {
         let dir = cli.dir.unwrap_or_else(|| {
             let user_home = env::var("HOME").expect("HOME not set");
