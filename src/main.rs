@@ -44,7 +44,7 @@ fn parse_dir(dir_path: PathBuf) -> anyhow::Result<()> {
     for entry in entries {
         match entry {
             Ok(entry) => {
-                if let Err(e) = recover_icon_id_from_file(&entry.path()) {
+                if let Err(e) = recover_icon_for_file(&entry.path()) {
                     eprintln!("Error processing {}: {e}", entry.path().display());
                 }
             }
@@ -57,7 +57,7 @@ fn parse_dir(dir_path: PathBuf) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn recover_icon_id_from_file(file_entry: &PathBuf) -> anyhow::Result<()> {
+fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
     if !file_entry.is_file() {
         bail!("{} is not a file, skipping...", file_entry.display());
     }
