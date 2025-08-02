@@ -91,7 +91,7 @@ fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
     }
 
     let mut icon_exists = false;
-    let mut game_id = String::new();
+    let mut game_id: Option<String> = None;
 
     'line_iter: for (i, line) in reader.enumerate() {
         let line = match line {
@@ -110,7 +110,7 @@ fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
 
             if key == "Exec" {
                 game_id = match extract_game_id(value) {
-                    Some(val) => val,
+                    Some(val) => Some(val),
                     None => {
                         eprintln!("No game id found!");
                         break 'line_iter;
@@ -133,11 +133,13 @@ fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
 
 
     if !icon_exists {
-        let icon_hash = extract_icon_id(&game_id)?;
-        println!("Found icon id: {}", &icon_hash);
+        if let Some(game_id) = game_id {
+            let icon_hash = extract_icon_id(&game_id, false)?;
+            println!("Found icon id: {}", &icon_hash);
 
-        let url = format!("https://cdn.steamstatic.com/steamcommunity/public/images/apps/{game_id}/{icon_hash}.ico");
-        println!("Icon url: {url}");
+            let url = format!("https://cdn.steamstatic.com/steamcommunity/public/images/apps/{game_id}/{icon_hash}.ico");
+            println!("Icon url: {url}");
+        }
     }
 
     println!();
