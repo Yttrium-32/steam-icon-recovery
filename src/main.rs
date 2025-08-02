@@ -1,9 +1,10 @@
 use std::env;
 use std::path::PathBuf;
 use std::fs::{read_dir, File};
-use std::io::{BufReader, BufRead};
+use std::io::{BufRead, BufReader, Seek, SeekFrom};
 use std::process::Command;
 
+use ico::IconDir;
 use reqwest::blocking::get;
 use anyhow::{Context, bail};
 use regex::Regex;
@@ -138,7 +139,7 @@ fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
             let icon_id = extract_icon_id(&game_id, false)?;
             println!("Found icon id: {}", &icon_id);
 
-            let icon_name = format!("steam_icon_{game_id}.ico");
+            let icon_name = format!("steam_icon_{game_id}");
 
             let url = format!("https://cdn.steamstatic.com/steamcommunity/public/images/apps/{game_id}/{icon_id}.ico");
             println!("Icon url: {url}");
@@ -153,14 +154,41 @@ fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
 
 fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()>
 {
-    let mut dest = File::create(icon_name)
-        .with_context(|| format!("Failed to create file at {icon_name}"))?;
+    let ico_path = format!("{icon_name}.ico");
 
+    let mut dest = std::fs::OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .read(true)
+        .write(true)
+        .open(&ico_path)
+        .with_context(|| format!("Failed to create file at {ico_path}"))?;
 
     let mut response = get(url)
         .with_context(|| format!("Failed to send GET request to {url}"))?;
 
-    response.copy_to(&mut dest).with_context(|| format!("Failed to write response to file at {:?}", dest))?;
+    response.copy_to(&mut dest)
+        .with_context(|| format!("Failed to write response to file at {:?}", dest))?;
+
+    dest.seek(SeekFrom::Start(0))?;
+
+    let icon_dir = IconDir::read(&dest)
+        .with_context(|| format!("Error reading icon at {:?}", dest))?;
+
+    for entry in icon_dir.entries().iter() {
+        let image = entry.decode()
+            .with_context(||
+                format!("{:?} in {:?} might be malformed", entry, dest)
+            )?;
+
+        let png_icon_name = format!("{icon_name}_{}x{}.png", entry.width(), entry.height());
+
+        let png_file = File::create(&png_icon_name)
+            .with_context(|| format!("Failed to create file {}", png_icon_name))?;
+
+        image.write_png(png_file)
+            .with_context(|| format!("Failed to write png file {}", png_icon_name))?;
+    }
 
     Ok(())
 }
