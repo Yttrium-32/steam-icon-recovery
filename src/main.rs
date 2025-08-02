@@ -173,7 +173,7 @@ fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()>
     dest.seek(SeekFrom::Start(0))?;
 
     let icon_dir = IconDir::read(&dest)
-        .with_context(|| format!("Error reading icon at {:?}", dest))?;
+        .with_context(|| format!("Read icon failed for {:?}", dest))?;
 
     for entry in icon_dir.entries().iter() {
         let image = entry.decode()
