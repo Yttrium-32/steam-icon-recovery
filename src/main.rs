@@ -1,4 +1,3 @@
-use std::env;
 use std::path::PathBuf;
 use std::fs::{read_dir, File};
 use std::io::{BufRead, BufReader, Seek, SeekFrom};
@@ -10,18 +9,8 @@ use anyhow::{Context, bail};
 use regex::Regex;
 use clap::Parser;
 
-/// Steam shortcuts icon recovery tool for linux
-#[derive(Parser)]
-#[command(version, about, long_about = None)]
-struct Cli {
-    /// Optional file to process, overrides `dir`
-    #[arg(short, long, value_name = "FILE")]
-    file: Option<PathBuf>,
-
-    /// Directory to parse files from, defaults to $HOME/.local/share/applications
-    #[arg(short, long, value_name = "DIR")]
-    dir: Option<PathBuf>
-}
+mod cli;
+use cli::Cli;
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
@@ -29,10 +18,7 @@ fn main() -> anyhow::Result<()> {
     if let Some(file_path) = cli.file {
         recover_icon_for_file(&file_path)?;
     } else {
-        let dir = cli.dir.unwrap_or_else(|| {
-            let user_home = env::var("HOME").expect("HOME not set");
-            PathBuf::from(user_home).join(".local/share/applications/")
-        });
+        let dir = cli.get_dir();
         parse_dir(dir)?;
     }
 
