@@ -103,7 +103,7 @@ pub fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
 
     if !icon_exists {
         if let Some(game_id) = game_id {
-            let icon_id = extract_icon_id(&game_id, true)?;
+            let icon_id = extract_icon_id(&game_id, false)?;
             println!("Found icon id: {}", &icon_id);
 
             let icon_name = format!("steam_icon_{game_id}");
