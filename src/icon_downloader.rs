@@ -57,17 +57,17 @@ fn process_icon_entry(
         )
     })?;
 
-    let cur_resolution = resolution_paths[&icon_entry.width()].display();
-    let png_icon_path = format!("{}/{}.png", cur_resolution, icon_name);
+    let cur_resolution = &resolution_paths[&icon_entry.width()];
+    let png_icon_path = cur_resolution.join(icon_name);
 
-    println!("Icon Path: {}", png_icon_path);
+    println!("Icon Path: {}", png_icon_path.display());
 
     let png_file = File::create(&png_icon_path)
-        .with_context(|| format!("Failed to create file {}", png_icon_path))?;
+        .with_context(|| format!("Failed to create file {}", png_icon_path.display()))?;
 
     image
         .write_png(png_file)
-        .with_context(|| format!("Failed to write png file {}", png_icon_path))?;
+        .with_context(|| format!("Failed to write png file {}", png_icon_path.display()))?;
 
     Ok(())
 }
