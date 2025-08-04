@@ -1,11 +1,17 @@
-use std::fs::File;
+use std::collections::HashMap;
+use std::env;
+use std::fs::{File, read_dir};
 use std::io::{Seek, SeekFrom};
+use std::path::PathBuf;
 
-use anyhow::Context;
+use anyhow::{Context, bail};
 use ico::{IconDir, IconDirEntry};
 use reqwest::blocking::get;
 
 pub fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()> {
+    let user_home = env::var("HOME").context("HOME not set")?;
+    let icon_dir_path = PathBuf::from(user_home).join(".local/share/icons/hicolor/");
+
     let ico_path = format!("{icon_name}.ico");
 
     let mut dest = std::fs::OpenOptions::new()
@@ -27,8 +33,12 @@ pub fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()> {
     let icon_dir =
         IconDir::read(&dest).with_context(|| format!("Read icon failed for {:?}", dest))?;
 
-    for entry in icon_dir.entries().iter() {
-        process_icon_entry(entry, &dest, icon_name)?;
+    if let Ok(resolution_paths) = get_resolutions(&icon_dir_path) {
+        for entry in icon_dir.entries().iter() {
+            process_icon_entry(entry, &dest, icon_name, &resolution_paths)?;
+        }
+    } else {
+        bail!("Failed to get resolution paths! Something has gone very wrong...");
     }
 
     Ok(())
@@ -38,6 +48,7 @@ fn process_icon_entry(
     icon_entry: &IconDirEntry,
     icon_file_instance: &File,
     icon_name: &String,
+    resolution_paths: &HashMap<u32, PathBuf>,
 ) -> anyhow::Result<()> {
     let image = icon_entry.decode().with_context(|| {
         format!(
@@ -46,18 +57,47 @@ fn process_icon_entry(
         )
     })?;
 
-    let png_icon_name = format!(
-        "{icon_name}_{}x{}.png",
-        icon_entry.width(),
-        icon_entry.height()
-    );
+    let cur_resolution = resolution_paths[&icon_entry.width()].display();
+    let png_icon_path = format!("{}/{}.png", cur_resolution, icon_name);
 
-    let png_file = File::create(&png_icon_name)
-        .with_context(|| format!("Failed to create file {}", png_icon_name))?;
+    println!("Icon Path: {}", png_icon_path);
+
+    let png_file = File::create(&png_icon_path)
+        .with_context(|| format!("Failed to create file {}", png_icon_path))?;
 
     image
         .write_png(png_file)
-        .with_context(|| format!("Failed to write png file {}", png_icon_name))?;
+        .with_context(|| format!("Failed to write png file {}", png_icon_path))?;
 
     Ok(())
+}
+
+fn get_resolutions(icon_dir_path: &PathBuf) -> anyhow::Result<HashMap<u32, PathBuf>> {
+    let mut resolution_vec = HashMap::new();
+    let paths = read_dir(icon_dir_path).with_context(|| {
+        format!(
+            "{} doesn't exist or lacks read permissions",
+            icon_dir_path.display()
+        )
+    })?;
+
+    for entry in paths {
+        match entry {
+            Ok(entry) => {
+                for component in entry.path().components() {
+                    if let Some(segment) = component.as_os_str().to_str() {
+                        if let Some((resolution, _)) = segment.split_once("x") {
+                            resolution_vec
+                                .insert(resolution.parse()?, entry.path().to_owned().clone());
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to read path: {e}");
+                continue;
+            }
+        };
+    }
+    Ok(resolution_vec)
 }
