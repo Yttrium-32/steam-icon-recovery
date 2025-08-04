@@ -62,6 +62,12 @@ fn process_icon_entry(
 
     println!("Icon Path: {}", png_icon_path.display());
 
+    // Don't overwrite icon if it already exists
+    if png_icon_path.is_file() {
+        println!("Icon {} already exists, skipping...", png_icon_path.display());
+        return Ok(());
+    }
+
     let png_file = File::create(&png_icon_path)
         .with_context(|| format!("Failed to create file {}", png_icon_path.display()))?;
 
