@@ -18,7 +18,6 @@ pub fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()> {
     // Avoid downloading icon file if it already exists
     let dest = if !ico_path.is_file() {
         let mut file_ptr = std::fs::OpenOptions::new()
-
             .create(true)
             .truncate(true)
             .read(true)

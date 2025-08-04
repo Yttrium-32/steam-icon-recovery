@@ -1,6 +1,6 @@
-use std::process::Command;
-use regex::Regex;
 use anyhow::{Context, bail};
+use regex::Regex;
+use std::process::Command;
 
 #[inline]
 pub fn extract_game_id(exec_field: &str) -> Option<String> {

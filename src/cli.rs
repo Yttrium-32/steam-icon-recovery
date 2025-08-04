@@ -1,5 +1,5 @@
-use std::{env, path::PathBuf};
 use clap::Parser;
+use std::{env, path::PathBuf};
 
 /// Steam shortcuts icon recovery tool for linux
 #[derive(Parser)]
@@ -11,7 +11,7 @@ pub struct Cli {
 
     /// Directory to parse files from, defaults to $HOME/.local/share/applications
     #[arg(short, long, value_name = "DIR")]
-    pub dir: Option<PathBuf>
+    pub dir: Option<PathBuf>,
 }
 
 impl Cli {
@@ -22,4 +22,3 @@ impl Cli {
         })
     }
 }
-

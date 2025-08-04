@@ -1,14 +1,18 @@
 use anyhow::{Context, bail};
-use std::path::PathBuf;
+use std::fs::{File, read_dir};
 use std::io::{BufRead, BufReader};
-use std::fs::{read_dir, File};
+use std::path::PathBuf;
 
 use crate::extractors::{extract_game_id, extract_icon_id};
 use crate::icon_downloader::download_icon;
 
 pub fn parse_dir(dir_path: PathBuf) -> anyhow::Result<()> {
-    let entries = read_dir(&dir_path)
-        .with_context(|| format!("{} doesn't exist or lacks read permissions", dir_path.display()))?;
+    let entries = read_dir(&dir_path).with_context(|| {
+        format!(
+            "{} doesn't exist or lacks read permissions",
+            dir_path.display()
+        )
+    })?;
 
     for entry in entries {
         match entry {
@@ -64,9 +68,7 @@ pub fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
 
     'line_iter: for (i, line) in reader.enumerate() {
         let line = match line {
-            Ok(val) => {
-                val
-            }
+            Ok(val) => val,
             Err(e) => {
                 eprintln!("Failed to read line {i}: {e}");
                 continue 'line_iter;
@@ -100,7 +102,6 @@ pub fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
         }
     }
 
-
     if !icon_exists {
         if let Some(game_id) = game_id {
             let icon_id = extract_icon_id(&game_id, false)?;
@@ -108,7 +109,9 @@ pub fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
 
             let icon_name = format!("steam_icon_{game_id}");
 
-            let url = format!("https://cdn.steamstatic.com/steamcommunity/public/images/apps/{game_id}/{icon_id}.ico");
+            let url = format!(
+                "https://cdn.steamstatic.com/steamcommunity/public/images/apps/{game_id}/{icon_id}.ico"
+            );
             println!("Icon url: {url}");
 
             download_icon(&url, &icon_name)?;
