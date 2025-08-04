@@ -13,11 +13,11 @@ pub fn extract_game_id(exec_field: &str) -> Option<&str> {
 
 #[inline]
 pub fn extract_icon_id(game_id: &str, is_dummy: bool) -> anyhow::Result<String> {
-    let game_id_regex: Regex = Regex::new(r#""clienticon"\s+"([^"]+)""#).unwrap();
+    let icon_id_regex: Regex = Regex::new(r#""clienticon"\s+"([^"]+)""#).unwrap();
 
     if is_dummy {
         // Return a dummy string for testing
-        return Ok("9102f4v4h3491h8hf4c1u2394n184n1th4".to_string());
+        return Ok("9102f4v4h3491h8hf4c1u2394n184n1th4".into());
     }
 
     let cmd = Command::new("steamcmd")
@@ -29,8 +29,14 @@ pub fn extract_icon_id(game_id: &str, is_dummy: bool) -> anyhow::Result<String> 
         .output()
         .with_context(|| "Failed to execute `steamcmd`")?;
 
-    let cmd_output = String::from_utf8_lossy(&cmd.stdout);
-    if let Some(capture) = game_id_regex.captures(&cmd_output) {
+    if !cmd.status.success() {
+        bail!("steamcmd failed with status: {}", cmd.status);
+    }
+
+    let cmd_output = std::str::from_utf8(&cmd.stdout)
+        .context("`steamcmd` output is not valid UTF-8")?;
+
+    if let Some(capture) = icon_id_regex.captures(&cmd_output) {
         Ok(capture[1].to_owned())
     } else {
         bail!("No icon id found! Something has gone wrong...");
