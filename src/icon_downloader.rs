@@ -48,10 +48,10 @@ pub fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()> {
             process_icon_entry(entry, &dest, icon_name, &resolution_paths)?;
         }
     } else {
-        bail!(format!(
+        bail!(
             "Failed to get resolution paths at {}!",
             icon_dir_path.display()
-        ));
+        );
     }
 
     Ok(())
