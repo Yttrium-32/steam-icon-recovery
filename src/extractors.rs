@@ -3,13 +3,12 @@ use regex::Regex;
 use std::process::Command;
 
 #[inline]
-pub fn extract_game_id(exec_field: &str) -> Option<String> {
+pub fn extract_game_id(exec_field: &str) -> Option<&str> {
     let game_id_regex: Regex = Regex::new(r"steam steam://rungameid/([0-9]+)").unwrap();
 
-    if let Some(capture) = game_id_regex.captures(exec_field) {
-        return Some(capture[1].to_owned());
-    }
-    None
+    game_id_regex
+        .captures(exec_field)
+        .and_then(|caps| caps.get(1).map(|m| m.as_str()))
 }
 
 #[inline]

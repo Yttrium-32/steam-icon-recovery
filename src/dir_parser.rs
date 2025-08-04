@@ -81,7 +81,7 @@ pub fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
 
             if key == "Exec" {
                 game_id = match extract_game_id(value) {
-                    Some(val) => Some(val),
+                    Some(val) => Some(val.to_string()),
                     None => {
                         eprintln!("No game id found!");
                         break 'line_iter;
