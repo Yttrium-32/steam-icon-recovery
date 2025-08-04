@@ -8,7 +8,7 @@ use anyhow::{Context, bail};
 use ico::{IconDir, IconDirEntry};
 use reqwest::blocking::get;
 
-pub fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()> {
+pub fn download_icon(url: &str, icon_name: &str) -> anyhow::Result<()> {
     let user_home = PathBuf::from(env::var("HOME").context("HOME not set")?);
     let icon_dir_path = user_home.join(".local/share/icons/hicolor/");
     let cache_dir = user_home.join(".cache/");
@@ -59,7 +59,7 @@ pub fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()> {
 fn process_icon_entry(
     icon_entry: &IconDirEntry,
     icon_file_instance: &File,
-    icon_name: &String,
+    icon_name: &str,
     resolution_paths: &HashMap<u32, PathBuf>,
 ) -> anyhow::Result<()> {
     let image = icon_entry.decode().with_context(|| {

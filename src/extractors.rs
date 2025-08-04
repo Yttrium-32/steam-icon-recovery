@@ -13,7 +13,7 @@ pub fn extract_game_id(exec_field: &str) -> Option<String> {
 }
 
 #[inline]
-pub fn extract_icon_id(game_id: &String, is_dummy: bool) -> anyhow::Result<String> {
+pub fn extract_icon_id(game_id: &str, is_dummy: bool) -> anyhow::Result<String> {
     let game_id_regex: Regex = Regex::new(r#""clienticon"\s+"([^"]+)""#).unwrap();
 
     if is_dummy {
