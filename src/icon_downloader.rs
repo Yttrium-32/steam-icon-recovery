@@ -16,9 +16,9 @@ pub fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()> {
     let ico_path = cache_dir.join(format!("{icon_name}.ico"));
 
     // Avoid downloading icon file if it already exists
-    let mut dest: File;
-    if !ico_path.is_file() {
-        dest = std::fs::OpenOptions::new()
+    let dest = if !ico_path.is_file() {
+        let mut file_ptr = std::fs::OpenOptions::new()
+
             .create(true)
             .truncate(true)
             .read(true)
@@ -30,14 +30,15 @@ pub fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()> {
             get(url).with_context(|| format!("Failed to send GET request to {url}"))?;
 
         response
-            .copy_to(&mut dest)
-            .with_context(|| format!("Failed to write response to file at {:?}", dest))?;
+            .copy_to(&mut file_ptr)
+            .with_context(|| format!("Failed to write response to file at {:?}", file_ptr))?;
 
-        dest.seek(SeekFrom::Start(0))?;
+        file_ptr.seek(SeekFrom::Start(0))?;
+        file_ptr
     } else {
-        dest = File::open(&ico_path)
-            .with_context(|| format!("Failed to open icon {}", ico_path.display()))?;
-    }
+        File::open(&ico_path)
+            .with_context(|| format!("Failed to open icon {}", ico_path.display()))?
+    };
 
     let icon_dir =
         IconDir::read(&dest).with_context(|| format!("Read icon failed for {:?}", dest))?;
