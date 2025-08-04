@@ -38,7 +38,10 @@ pub fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()> {
             process_icon_entry(entry, &dest, icon_name, &resolution_paths)?;
         }
     } else {
-        bail!(format!("Failed to get resolution paths at {}!", icon_dir_path.display()));
+        bail!(format!(
+            "Failed to get resolution paths at {}!",
+            icon_dir_path.display()
+        ));
     }
 
     Ok(())
@@ -64,7 +67,10 @@ fn process_icon_entry(
 
     // Don't overwrite icon if it already exists
     if png_icon_path.is_file() {
-        println!("Icon {} already exists, skipping...", png_icon_path.display());
+        println!(
+            "Icon {} already exists, skipping...",
+            png_icon_path.display()
+        );
         return Ok(());
     }
 
