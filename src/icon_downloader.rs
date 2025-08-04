@@ -10,9 +10,10 @@ use reqwest::blocking::get;
 
 pub fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()> {
     let user_home = env::var("HOME").context("HOME not set")?;
-    let icon_dir_path = PathBuf::from(user_home).join(".local/share/icons/hicolor/");
+    let icon_dir_path = PathBuf::from(&user_home).join(".local/share/icons/hicolor/");
+    let cache_dir = PathBuf::from(user_home).join(".cache/");
 
-    let ico_path = format!("{icon_name}.ico");
+    let ico_path = cache_dir.join(format!("{icon_name}.ico"));
 
     let mut dest = std::fs::OpenOptions::new()
         .create(true)
@@ -20,7 +21,7 @@ pub fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()> {
         .read(true)
         .write(true)
         .open(&ico_path)
-        .with_context(|| format!("Failed to create file at {ico_path}"))?;
+        .with_context(|| format!("Failed to create file at {}", ico_path.display()))?;
 
     let mut response = get(url).with_context(|| format!("Failed to send GET request to {url}"))?;
 
