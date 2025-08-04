@@ -9,9 +9,9 @@ use ico::{IconDir, IconDirEntry};
 use reqwest::blocking::get;
 
 pub fn download_icon(url: &String, icon_name: &String) -> anyhow::Result<()> {
-    let user_home = env::var("HOME").context("HOME not set")?;
-    let icon_dir_path = PathBuf::from(&user_home).join(".local/share/icons/hicolor/");
-    let cache_dir = PathBuf::from(user_home).join(".cache/");
+    let user_home = PathBuf::from(env::var("HOME").context("HOME not set")?);
+    let icon_dir_path = user_home.join(".local/share/icons/hicolor/");
+    let cache_dir = user_home.join(".cache/");
 
     let ico_path = cache_dir.join(format!("{icon_name}.ico"));
 
