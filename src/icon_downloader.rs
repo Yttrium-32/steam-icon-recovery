@@ -72,8 +72,6 @@ fn process_icon_entry(
     let cur_resolution = &resolution_paths[&icon_entry.width()];
     let png_icon_path = cur_resolution.join(icon_name);
 
-    println!("Icon Path: {}", png_icon_path.display());
-
     // Don't overwrite icon if it already exists
     if png_icon_path.is_file() {
         println!(

@@ -1,6 +1,6 @@
 use anyhow::{Context, bail};
 use std::fs::{File, read_dir};
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 
 use crate::extractors::{extract_game_id, extract_icon_id};
@@ -37,6 +37,9 @@ pub fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
 
     let file_handle = File::open(file_entry)?;
     let mut reader = BufReader::new(file_handle).lines();
+    let mut lines = Vec::new();
+
+    let mut game_id: Option<String> = None;
 
     println!("Processing `{}` :", file_entry.display());
 
@@ -55,6 +58,9 @@ pub fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
             if val.trim() != "[Desktop Entry]" {
                 eprintln!("No `[Desktop Entry]` section found, skipping file...\n");
                 return Ok(());
+            } else {
+                // Keep [Desktop Entry] header
+                lines.push(val.clone());
             }
         }
         Err(e) => {
@@ -63,60 +69,53 @@ pub fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
         }
     }
 
-    let mut icon_exists = false;
-    let mut game_id: Option<String> = None;
-
-    'line_iter: for (i, line) in reader.enumerate() {
+    for (i, line) in reader.enumerate() {
         let line = match line {
             Ok(val) => val,
             Err(e) => {
                 eprintln!("Failed to read line {i}: {e}");
-                continue 'line_iter;
+                continue;
             }
         };
+
+        // Keep track of all lines for writing later
+        lines.push(line.clone());
 
         if let Some((key, value)) = line.split_once("=") {
             let key = key.trim();
             let value = value.trim();
 
-            if key == "Exec" {
-                game_id = match extract_game_id(value) {
-                    Some(val) => Some(val.to_string()),
-                    None => {
-                        eprintln!("No game id found!");
-                        break 'line_iter;
-                    }
-                };
+            if key == "Exec" && game_id.is_none() {
+                game_id = extract_game_id(value).map(|v| v.to_string());
+                if game_id.is_none() {
+                    eprintln!("No game ID found, skipping file...");
+                    return Ok(());
+                }
             }
 
-            if key == "Icon" {
-                if value != "steam" {
-                    println!("Icon already exists, skipping...");
-                    icon_exists = true;
-                }
-                break 'line_iter;
+            if key == "Icon" && value != "steam" {
+                eprintln!("Icon already exists, skipping...");
+                return Ok(());
             }
         } else {
             eprintln!("Line number {i} might be malformed, failed to parse");
-            continue 'line_iter;
         }
     }
 
-    if !icon_exists {
-        if let Some(game_id) = game_id {
-            let icon_id = extract_icon_id(&game_id, false)?;
-            println!("Found icon id: {}", &icon_id);
+    // Game ID is guaranteed to be valid if an Exec field exists
+    let game_id = game_id.context("Game ID not found, is there a valid `Exec` field?")?;
 
-            let icon_name = format!("steam_icon_{game_id}");
+    let icon_id = extract_icon_id(&game_id, false)?;
+    println!("Found icon id: {}", &icon_id);
 
-            let url = format!(
-                "https://cdn.steamstatic.com/steamcommunity/public/images/apps/{game_id}/{icon_id}.ico"
-            );
-            println!("Icon url: {url}");
+    let icon_name = format!("steam_icon_{game_id}");
 
-            download_icon(&url, &icon_name)?;
-        }
-    }
+    let url = format!(
+        "https://cdn.steamstatic.com/steamcommunity/public/images/apps/{game_id}/{icon_id}.ico"
+    );
+    println!("Icon url: {url}");
+
+    download_icon(&url, &icon_name)?;
 
     println!();
     Ok(())
