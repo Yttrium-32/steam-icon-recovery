@@ -62,6 +62,8 @@ fn process_icon_entry(
     icon_name: &str,
     resolution_paths: &HashMap<u32, PathBuf>,
 ) -> anyhow::Result<()> {
+    let icon_name = format!("{icon_name}.png");
+
     let image = icon_entry.decode().with_context(|| {
         format!(
             "{:?} in {:?} might be malformed",
