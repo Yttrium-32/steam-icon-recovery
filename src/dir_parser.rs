@@ -88,13 +88,13 @@ pub fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
             if key == "Exec" && game_id.is_none() {
                 game_id = extract_game_id(value).map(|v| v.to_string());
                 if game_id.is_none() {
-                    eprintln!("No game ID found, skipping file...");
+                    eprintln!("No game ID found, skipping file...\n");
                     return Ok(());
                 }
             }
 
             if key == "Icon" && value != "steam" {
-                eprintln!("Icon already exists, skipping...");
+                eprintln!("Icon already exists, skipping...\n");
                 return Ok(());
             }
         } else {
