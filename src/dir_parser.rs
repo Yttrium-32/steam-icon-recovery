@@ -116,7 +116,45 @@ pub fn recover_icon_for_file(file_entry: &PathBuf) -> anyhow::Result<()> {
     println!("Icon url: {url}");
 
     download_icon(&url, &icon_name)?;
+    write_icon_field(&mut lines, &icon_name, file_entry)?;
 
     println!();
+    Ok(())
+}
+
+fn write_icon_field(
+    lines: &mut Vec<String>,
+    icon_name: &str,
+    file_entry: &PathBuf,
+) -> anyhow::Result<()> {
+    let mut found_icon_field = false;
+    for line in lines.iter_mut() {
+        if let Some((key, _)) = line.split_once('=') {
+            if key.trim() == "Icon" {
+                found_icon_field = true;
+                *line = format!("Icon={icon_name}");
+            }
+        }
+    }
+
+    if !found_icon_field {
+        eprintln!("`Icon` field not found, creating `Icon` field...");
+        lines.push(format!("Icon={icon_name}"));
+    }
+
+    let mut file_handle = File::create(file_entry)
+        .with_context(|| format!("Failed to update file {}", file_entry.display()))?;
+
+    println!("Updating {}", file_entry.display());
+    for line in lines {
+        writeln!(file_handle, "{line}").with_context(|| {
+            format!(
+                "Failed to write line `{}` to file `{}`",
+                line,
+                file_entry.display()
+            )
+        })?;
+    }
+
     Ok(())
 }
