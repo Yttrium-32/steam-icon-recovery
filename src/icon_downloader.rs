@@ -94,7 +94,7 @@ fn process_icon_entry(
 }
 
 fn get_resolutions(icon_dir_path: &PathBuf) -> anyhow::Result<HashMap<u32, PathBuf>> {
-    let mut resolution_vec = HashMap::new();
+    let mut resolution_map = HashMap::new();
     let paths = read_dir(icon_dir_path).with_context(|| {
         format!(
             "{} doesn't exist or lacks read permissions",
@@ -108,7 +108,7 @@ fn get_resolutions(icon_dir_path: &PathBuf) -> anyhow::Result<HashMap<u32, PathB
                 for component in entry.path().components() {
                     if let Some(segment) = component.as_os_str().to_str() {
                         if let Some((resolution, _)) = segment.split_once("x") {
-                            resolution_vec
+                            resolution_map
                                 .insert(resolution.parse()?, entry.path().to_owned().clone());
                         }
                     }
@@ -120,5 +120,5 @@ fn get_resolutions(icon_dir_path: &PathBuf) -> anyhow::Result<HashMap<u32, PathB
             }
         };
     }
-    Ok(resolution_vec)
+    Ok(resolution_map)
 }
