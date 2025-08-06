@@ -109,7 +109,7 @@ fn get_resolutions(icon_dir_path: &PathBuf) -> anyhow::Result<HashMap<u32, PathB
                     if let Some(segment) = component.as_os_str().to_str() {
                         if let Some((resolution, _)) = segment.split_once("x") {
                             resolution_map
-                                .insert(resolution.parse()?, entry.path().to_owned().clone());
+                                .insert(resolution.parse()?, entry.path().join("apps"));
                         }
                     }
                 }
