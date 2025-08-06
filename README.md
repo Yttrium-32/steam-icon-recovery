@@ -1,11 +1,16 @@
 # Steam Icon Recovery
 A simple rust application to recover lost icons for steam `.desktop` file
-shortcuts on linux. All it does is parse the game id, find the corresponding
+shortcuts on linux.
+
 The application functions as follows:
 1. Parse game ID from shortcut file
-2. Find corresponding image file using [steamcmd](https://developer.valvesoftware.com/wiki/SteamCMD)
-3. Download the icon file and split it into various pngs
+2. Find corresponding image file using `steamcmd`
+3. Download the icon file and split it into various PNGs
 4. Set the icon in the shortcut file
+
+> [!IMPORTANT]
+> This application relies on [steamcmd](https://developer.valvesoftware.com/wiki/SteamCMD)
+to retrieve icon ID, ensure that it is installed.
 
 ## Usage
 ```bash
