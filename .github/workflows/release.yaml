@@ -39,12 +39,9 @@ jobs:
         with:
           name: steam-icon-recovery
 
-      - name: List files to verify download
-        run: ls -lh steam-icon-recovery/
-
       - name: Create Github Release
         uses: softprops/action-gh-release@v2
         with:
-          files: steam-icon-recovery/steam-icon-recovery
+          files: steam-icon-recovery
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
