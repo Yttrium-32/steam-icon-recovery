@@ -26,15 +26,15 @@ steam-icon-recovery [OPTIONS]
 | `-V`, `--version`     | Show version information                                                                 |
 
 ### Examples
+- Use defaults, process all `.desktop` files in `~/.local/share/applications`:
+```bash
+steam-icon-recovery
+```
 - Process specific file:
 ```bash
 steam-icon-recovery --file ~/Games/game-shortcut.desktop
 ```
 - Process all `.desktop` files in a given directory:
 ```bash
-steam-icon-recovery --file ~/Games/applications
-```
-- Use defaults, process all `.desktop` files in `~/.local/share/applications`:
-```bash
-steam-icon-recovery
+steam-icon-recovery --dir ~/Games/applications
 ```
